@@ -1,103 +1,133 @@
-import Image from "next/image";
+"use client";
+
+import { TZDate } from "@date-fns/tz";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+
+const COMMON_TIMEZONES: string[] = [
+  "Pacific/Honolulu", // Hawaii (UTC-10)
+  "America/Los_Angeles", // US West Coast (UTC-8 / UTC-7 DST)
+  "America/Denver", // US Mountain Time (UTC-7 / UTC-6 DST)
+  "America/New_York", // US East Coast (UTC-5 / UTC-4 DST)
+  "America/Sao_Paulo", // Brazil (UTC-3)
+  "Europe/London", // UK (UTC / UTC+1 DST)
+  "Europe/Berlin", // Central Europe (UTC+1 / UTC+2 DST)
+  "Asia/Dubai", // UAE (UTC+4)
+  "Asia/Tokyo", // Japan (UTC+9)
+  "Australia/Sydney", // Australia (UTC+10 / UTC+11 DST)
+];
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [myTimeInMs, setMyTimeInMs] = useState(new Date().getTime());
+  const [timeZone, setTimeZone] = useState(COMMON_TIMEZONES[3]);
+  const [useSeconds, setUseSeconds] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const currentTimeZone = new TZDate(myTimeInMs);
+  const customTimeZone = currentTimeZone.withTimeZone(timeZone);
+
+  const displayValue = useSeconds ? Math.floor(myTimeInMs / 1000) : myTimeInMs;
+  const unit = useSeconds ? "seconds" : "milliseconds";
+
+  const handleInputChange = (value: number) => {
+    const timeInMs = useSeconds ? value * 1000 : value;
+    setMyTimeInMs(timeInMs);
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const number = Number(text);
+      if (!isNaN(number)) {
+        handleInputChange(number);
+      }
+    } catch (err) {
+      console.error("Failed to read clipboard:", err);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <Card className="w-full max-w-lg">
+        <CardHeader>
+          <CardTitle>Time Zone Converter</CardTitle>
+          <CardDescription>
+            Convert timestamps between time zones
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              value={displayValue}
+              onChange={(e) => handleInputChange(Number(e.target.value))}
+              placeholder={`Time in ${unit}`}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <Button onClick={() => setMyTimeInMs(new Date().getTime())}>
+              Now
+            </Button>
+            <Button onClick={handlePaste} variant="outline">
+              Paste
+            </Button>
+          </div>
+
+          <Select
+            value={timeZone}
+            onValueChange={(value) => setTimeZone(value)}
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <SelectTrigger>
+              <SelectValue placeholder="Select timezone" />
+            </SelectTrigger>
+            <SelectContent>
+              {COMMON_TIMEZONES.map((tz) => (
+                <SelectItem key={tz} value={tz}>
+                  {tz}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">
+                Local
+              </div>
+              <div className="text-sm">{currentTimeZone.toString()}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">
+                {timeZone}
+              </div>
+              <div className="text-sm">{customTimeZone.toString()}</div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="unit-toggle"
+              checked={useSeconds}
+              onCheckedChange={setUseSeconds}
+            />
+            <label htmlFor="unit-toggle" className="text-sm font-medium">
+              Use seconds (Python-friendly)
+            </label>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
